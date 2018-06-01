@@ -1,21 +1,21 @@
-# Jira API client for Laravel 5.4+
+# Jira API client for Laravel 5.5+
 
-Perform various operations of [Jira APIs](https://developer.atlassian.com/cloud/jira/platform/rest/) with Laravel 5.4+
+Perform various operations of [Jira APIs](https://developer.atlassian.com/cloud/jira/platform/rest/) with Laravel 5.5+
 
 The aim of the package is to make it easier to communicate with the API. By default the response from the request is not altered in any way.
 By creating your own implementation or de simple helpers provided with the package you are able to integrate Jira the way you like.
 
 ## Installation
 
-To get the latest version of `laravel-jira-rest-client`, run the following command
+To get the latest version of `jira-rest-client`, run the following command
 ```shell
-composer require rjvandoesburg/laravel-jira-rest-client
+composer require kenuo/jira-rest-client
 ```
 Do note that not all methods have been implemented yet.
 
 Laravel 5.5 uses Package Auto-Discovery, so doesn't require you to manually add the ServiceProvider.
 
-## Laravel 5.4:
+## Laravel 5.5:
 
 If you don't use auto-discovery, add the ServiceProvider to the providers array in `config/app.php`
 ```php
@@ -82,13 +82,3 @@ To alter the Guzzle Client used for requests you can add middleware to alter the
 By default the `BasicAuthMiddleware` is added and used for authentication with Jira. (Sessions and OAuth tokens are WIP)
 
 ps. I'm not quite happy with the middleware as it is implemented at this time but I do want to incorporate them in a way.
-
-## TODO
-- More helpers
-- Implement missing
-- Middleware
-- Better README
-- Sessions auth
-- OAuth
-- A way to alter the request before it is send out (globally for each request and possibility for specific requests)
-- Tests
