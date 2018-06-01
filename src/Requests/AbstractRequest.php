@@ -19,7 +19,6 @@ abstract class AbstractRequest
 
     /**
      * A list of middleware to use for the current request
-     *
      * @var array
      */
     protected $middleware = [];
@@ -41,8 +40,9 @@ abstract class AbstractRequest
         $options = [
             'base_uri' => config('atlassian.jira.host'),
             'headers'  => [
-                'Accept'       => 'application/json',
-                'Content-Type' => 'application/json',
+                'Accept'            => 'application/json',
+                'Content-Type'      => 'application/json',
+                'X-Atlassian-Token' => 'no-check',
             ],
         ];
 
@@ -50,7 +50,7 @@ abstract class AbstractRequest
         (app(\Illuminate\Pipeline\Pipeline::class))
             ->send($options)
             ->through($this->middleware)
-            ->then(function ($options) {
+            ->then(function($options) {
                 $this->client = new Client($options);
             });
 
@@ -59,19 +59,16 @@ abstract class AbstractRequest
 
     /**
      * Get the request url
-     *
      * @param string $resource
-     *
      * @return \Psr\Http\Message\UriInterface
      */
     public function getRequestUrl($resource)
     {
-        return Psr7\uri_for($this->getApi().'/'.$resource);
+        return Psr7\uri_for($this->getApi() . '/' . $resource);
     }
 
     /**
      * Get the Api to call agains
-     *
      * @return string
      */
     public function getApi()
@@ -81,12 +78,10 @@ abstract class AbstractRequest
 
     /**
      * Execute the request and return the response as a stream
-     *
      * @param string $method
      * @param string $resource
-     * @param array $parameters
-     * @param bool $asQueryParameters Some non-GET requests require sending query parameters instead.
-     *
+     * @param array  $parameters
+     * @param bool   $asQueryParameters Some non-GET requests require sending query parameters instead.
      * @return \GuzzleHttp\Psr7\Response
      * @throws \Atlassian\JiraRest\Exceptions\JiraClientException
      * @throws \Atlassian\JiraRest\Exceptions\JiraNotFoundException
@@ -99,11 +94,15 @@ abstract class AbstractRequest
         $client = $this->createClient();
 
         try {
+
+            \Log::debug("\nJira Api: \n\tUrl: " . $this->getRequestUrl($resource) . "\n\tMethod: $method\n\tparameters: \n" . var_export($this->getOptions($method,$parameters),
+                    true));
+
             return $client->request($method, $this->getRequestUrl($resource), $this->getOptions($method, $parameters, $asQueryParameters));
         } catch (RequestException $exception) {
             $message = $this->getJiraException($exception);
 
-            switch ($exception->getCode()) {
+            switch($exception->getCode()) {
                 case 401:
                     $message = __('You are not authenticated. Authentication required to perform this operation.');
                     throw new JiraUnauthorizedException($message, 401, $exception);
@@ -118,43 +117,57 @@ abstract class AbstractRequest
 
     /**
      * @param \GuzzleHttp\Exception\RequestException $exception
-     *
      * @return string
      */
     protected function getJiraException(RequestException $exception)
     {
         $response = json_decode($exception->getResponse()->getBody(), true);
         $errors = Arr::get($response, 'errorMessages', []);
-        if (empty($errors)) {
-            foreach (Arr::get($response, 'errors', []) as $key => $value) {
+        if(empty($errors)) {
+            foreach(Arr::get($response, 'errors', []) as $key => $value) {
                 $errors[] = "$value [$key]";
             }
         }
 
         $message = implode("\n", $errors);
 
-        return ! empty($message) ? $message : $exception->getMessage();
+        return !empty($message) ? $message : $exception->getMessage();
     }
 
     /**
-     * @param $method
+     * @param                                                       $method
      * @param \Atlassian\JiraRest\Requests\AbstractParameters|array $parameters
-     * @param bool $asQueryParameters Some non-GET requests require sending query parameters instead.
-     *
+     * @param bool                                                  $asQueryParameters Some non-GET requests require sending query parameters instead.
      * @return array
      */
     public function getOptions($method, $parameters = [], $asQueryParameters = false)
     {
         // Check if the parameters is an array or an instance of AbstractParameters
-        if ($parameters instanceof AbstractParameters) {
+        if($parameters instanceof AbstractParameters) {
             $parameters = $parameters->toArray();
         }
 
         // When dealing with a get request set the parameters as query
-        if ($method === 'GET' || $asQueryParameters) {
+        if($method === 'GET' || $asQueryParameters) {
             return [
                 'query' => $parameters,
             ];
+        }
+
+        // Todo file upload.
+        if(isset($parameters['multipart']) && !empty($parameters['multipart'])) {
+
+            foreach($parameters['multipart'] as $key => &$parameter) {
+
+                if(!isset($parameter['path']) || file_exists($parameter['path']) === false){
+                    continue;
+                }
+
+                $parameter['contents'] = fopen($parameter['path'], 'r');
+                unset($parameter['path']);
+            }
+
+            return $parameters;
         }
 
         return [
@@ -176,22 +189,20 @@ abstract class AbstractRequest
     /**
      * Because the user can enter either a raw array or an pre-defined class.
      * This method will validate the type of the parameters
-     *
      * @param array|\Atlassian\JiraRest\Requests\AbstractParameters $parameters
-     * @param string $class
-     *
+     * @param string                                                $class
      * @return bool
      * @throws \TypeError
      */
     protected function validateParameters($parameters, $class)
     {
         // The parameters can be an array or empty
-        if (is_array($parameters) || empty($parameters)) {
+        if(is_array($parameters) || empty($parameters)) {
             return true;
         }
 
         // If we get here the parameters need to be an instance of the given class
-        if ($parameters instanceof $class) {
+        if($parameters instanceof $class) {
             return true;
         }
 
@@ -205,7 +216,6 @@ abstract class AbstractRequest
 
     /**
      * Middleware to disable
-     *
      * @param string $middleware
      */
     public function disableMiddleware($middleware)
@@ -214,9 +224,8 @@ abstract class AbstractRequest
     }
 
     /**
-     * @param $middleware
+     * @param             $middleware
      * @param null|string $name
-     *
      * @return \Atlassian\JiraRest\Requests\AbstractRequest
      */
     public function addMiddleware($middleware, $name = null)

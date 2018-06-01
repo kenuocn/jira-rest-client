@@ -137,17 +137,20 @@ class IssueRequest extends AbstractRequest
 
     /**
      * Add one or more attachments to an issue.
-     * This resource expects a multipart post. The media-type multipart/form-data is defined in RFC 1867. Most client libraries have classes that make dealing with multipart posts simple. For instance, in Java the Apache HTTP Components library provides a MultiPartEntity that makes it simple to submit a multipart POST.
-     * In order to protect against XSRF attacks, because this method accepts multipart/form-data, it has XSRF protection on it. This means you must submit a header of X-Atlassian-Token: no-check with the request, otherwise it will be blocked.
-     * The name of the multipart/form-data parameter that contains attachments must be “file”
      *
      * @see https://developer.atlassian.com/cloud/jira/platform/rest/#api-api-2-issue-issueIdOrKey-attachments-post
      *
-     * @param string|int $issueIdOrKey
+     * @param string   $issueIdOrKey
+     * @param array    $parameters
+     * @return \GuzzleHttp\Psr7\Response
+     * @throws \Atlassian\JiraRest\Exceptions\JiraClientException
+     * @throws \Atlassian\JiraRest\Exceptions\JiraNotFoundException
+     * @throws \Atlassian\JiraRest\Exceptions\JiraUnauthorizedException
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function addAttachment($issueIdOrKey)
+    public function addAttachment($issueIdOrKey,$parameters = [])
     {
-        // TODO: implement
+        return $this->execute('post', "issue/{$issueIdOrKey}/attachments", $parameters);
     }
 
     /**
