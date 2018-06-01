@@ -1,0 +1,37 @@
+{
+    "name": "kenuo/jira-rest-client",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "kenuo",
+            "email": "1402992668@qq.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.0.0",
+        "laravel/framework": "5.5.*",
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Atlassian\\JiraRest\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Atlassian\\JiraRest\\JiraRestServiceProvider"
+            ],
+            "aliases": {
+                "Jira": "Atlassian\\JiraRest\\Facades\\Jira"
+            }
+        }
+    },
+    "suggest": {
+        "salsify/json-streaming-parser": "Require this when you want to parse the response in blocks"
+    }
+}
