@@ -2,13 +2,13 @@
 
 namespace Atlassian\JiraRest\Requests;
 
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Client;
+use Illuminate\Support\Arr;
+use GuzzleHttp\Exception\RequestException;
 use Atlassian\JiraRest\Exceptions\JiraClientException;
 use Atlassian\JiraRest\Exceptions\JiraNotFoundException;
 use Atlassian\JiraRest\Exceptions\JiraUnauthorizedException;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Psr7;
-use Illuminate\Support\Arr;
 
 abstract class AbstractRequest
 {
@@ -95,10 +95,11 @@ abstract class AbstractRequest
 
         try {
 
-            \Log::debug("\nJira Api: \n\tUrl: " . $this->getRequestUrl($resource) . "\n\tMethod: $method\n\tparameters: \n" . var_export($this->getOptions($method,$parameters),
-                    true));
+            //Todo log info.
+            $this->requestLog($method, $resource, $parameters, $asQueryParameters, $client);
 
             return $client->request($method, $this->getRequestUrl($resource), $this->getOptions($method, $parameters, $asQueryParameters));
+
         } catch (RequestException $exception) {
             $message = $this->getJiraException($exception);
 
@@ -186,6 +187,7 @@ abstract class AbstractRequest
         return $uri->getHost();
     }
 
+
     /**
      * Because the user can enter either a raw array or an pre-defined class.
      * This method will validate the type of the parameters
@@ -233,6 +235,21 @@ abstract class AbstractRequest
         $this->middleware[$name ?? $middleware] = $middleware;
 
         return $this;
+    }
+
+    /**
+     * 请求日志
+     *
+     * @param $method
+     * @param $resource
+     * @param $parameters
+     * @param $asQueryParameters
+     * @param $client
+     */
+    protected function requestLog($method, $resource, $parameters, $asQueryParameters, $client)
+    {
+        \Log::debug("\nJira Rest: \n\tHost: " . $this->getJiraHost() . "\n\tURL: " . $this->getRequestUrl($resource) . "\n\tMethod: $method\n\tHeaders: \n" . var_export($client->getConfig('headers'),
+                true) . "\n\t Parameters: $parameters\n" . "\n\t asQueryParameters: $asQueryParameters");
     }
 
 }
