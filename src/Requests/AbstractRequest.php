@@ -2,6 +2,7 @@
 
 namespace Atlassian\JiraRest\Requests;
 
+use Log;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
@@ -94,12 +95,10 @@ abstract class AbstractRequest
         $client = $this->createClient();
 
         try {
-
             //Todo log info.
             $this->requestLog($method, $resource, $parameters, $asQueryParameters, $client);
 
             return $client->request($method, $this->getRequestUrl($resource), $this->getOptions($method, $parameters, $asQueryParameters));
-
         } catch (RequestException $exception) {
             $message = $this->getJiraException($exception);
 
@@ -110,7 +109,7 @@ abstract class AbstractRequest
                 case 404:
                     throw new JiraNotFoundException($message, 404, $exception);
                 default:
-                    \Log::error($exception);
+                    Log::error($exception);
                     throw new JiraClientException($message, $exception->getCode(), $exception);
             }
         }
@@ -248,8 +247,8 @@ abstract class AbstractRequest
      */
     protected function requestLog($method, $resource, $parameters, $asQueryParameters, $client)
     {
-        \Log::debug("\nJira Rest: \n\tHost: " . $this->getJiraHost() . "\n\tURL: " . $this->getRequestUrl($resource) . "\n\tMethod: $method\n\tHeaders: \n" . var_export($client->getConfig('headers'),
-                true) . "\n\t Parameters: $parameters\n" . "\n\t asQueryParameters: $asQueryParameters");
+        Log::debug("\nJira Rest: \n\tHost: " . $this->getJiraHost() . "\n\tURL: " . $this->getRequestUrl($resource)->getPath() . "\n\tMethod: $method\n\tHeaders: \n" . var_export($client->getConfig('headers'),
+                true) . "\n\t Parameters: \n\t" .var_export($parameters,true). "\n\t asQueryParameters: \n-t".var_export($asQueryParameters,true)."\n\t");
     }
 
 }
